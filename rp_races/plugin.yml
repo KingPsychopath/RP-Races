@@ -1,0 +1,9 @@
+name: RP-Races
+version: 0.0.1
+description: This Plugin adds mutliple Races in Minecraft with some Pros and Cons
+author: L33m4n123
+main: com.github.l33m4n123.Races
+depend: [SQLibrary]
+commands:
+  race:
+    description: Shows the player the help to the race plugin.
