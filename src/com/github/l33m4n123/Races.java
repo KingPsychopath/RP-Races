@@ -11,7 +11,12 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import com.github.l33m4n123.abilities.EatFoodListener;
+import com.github.l33m4n123.abilities.UnderWaterBreathing;
+
 
 /**
  *
@@ -30,7 +35,19 @@ public class Races extends JavaPlugin {
     /**
      *
      */
-    private Database sqlite;
+    public static Database sqlite;
+
+    /**
+     *
+     */
+    private UnderWaterBreathing underWaterBreathingEvent =
+            new UnderWaterBreathing();
+
+    /**
+     *
+     */
+    private EatFoodListener onEatFood =
+            new EatFoodListener();
 
     /**
      *
@@ -47,11 +64,16 @@ public class Races extends JavaPlugin {
 
     @Override
     public final void onEnable() {
+
         PluginDescriptionFile p = this.getDescription();
         this.logger.info(p.getName() + " V"
         + p.getVersion() + " has been enabled!");
         getConfig().options().copyDefaults(true);
         saveConfig();
+
+
+
+        // To structure it a bit
 
         sqlite = new SQLite(Logger.getLogger("Minecraft"), "[RP-Races] ",
                 getDataFolder().getAbsolutePath(), "Races", ".sqlite");
@@ -62,6 +84,12 @@ public class Races extends JavaPlugin {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+
+        // To structure it a bit
+        PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(underWaterBreathingEvent, this);
+        pm.registerEvents(onEatFood, this);
     }
 
     /**
@@ -72,7 +100,7 @@ public class Races extends JavaPlugin {
         if (!sqlite.isTable("Races")) {
             sqlite.query("CREATE TABLE Races (id INT PRIMARY KEY,"
                     + "playername VARCHAR(50),"
-                    + "race VARCHAR(50));");
+                    + "race VARCHAR(50))");
            System.out.println("Races has been created!");
         }
     }
@@ -123,13 +151,33 @@ public class Races extends JavaPlugin {
             } else if (args.length >= 1 && args[0].equalsIgnoreCase("list")) {
                 player.sendMessage(getConfig().getString("list"));
                 return true;
+            } else if (args.length >= 2 && args[0].equalsIgnoreCase("b")
+                    || args.length >= 2 && args[0].equalsIgnoreCase("be")) {
+
+                if (args[1].equalsIgnoreCase("Human")) {
+                    try {
+                        sqlite.query("UPDATE Races SET race"
+                  + " = 'Human' WHERE playername = '" + player.getName() + "'");
+                        player.sendMessage("§6Your race was set to Human");
+                    } catch (SQLException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+
             } else if (args.length >= 1) {
                 player.sendMessage(getConfig().getString("help"));
             } else if (args.length == 0) {
                 try {
-                    sqlite.query("INSERT INTO Races(playername"
-                + ", race) VALUES('" + player.getName() + "', 'Default')");
-                } catch (SQLException e) {
+                    ResultSet rs = sqlite.query("SELECT COUNT(*) FROM Races"
+                    + " WHERE playername='" + player.getName() + "'");
+                    System.out.println(rs.getRow());
+                    if (rs.getRow() == 0) {
+                        sqlite.query("INSERT INTO Races(playername"
+                    + ", race) VALUES('" + player.getName() + "', 'Default')");
+                        System.out.println("Die Schleife");
+                        }
+                    } catch (SQLException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
@@ -141,6 +189,5 @@ public class Races extends JavaPlugin {
         }
         return false;
     }
-
 
 }
