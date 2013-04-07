@@ -15,7 +15,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.github.l33m4n123.abilities.EatFoodListener;
+import com.github.l33m4n123.abilities.LoseFoodWhileSprinting;
+import com.github.l33m4n123.abilities.RegisterIntoDatabase;
 import com.github.l33m4n123.abilities.UnderWaterBreathing;
+import com.github.l33m4n123.abilities.UnderWaterFoodRegeneration;
 
 
 /**
@@ -46,9 +49,26 @@ public class Races extends JavaPlugin {
     /**
      *
      */
+    private LoseFoodWhileSprinting onSprintEvent =
+            new LoseFoodWhileSprinting();
+
+    /**
+     *
+     */
+    private UnderWaterFoodRegeneration underWaterFoodRegeneration =
+            new UnderWaterFoodRegeneration(this);
+
+    /**
+     *
+     */
     private EatFoodListener onEatFood =
             new EatFoodListener();
 
+    /**
+     *
+     */
+    private RegisterIntoDatabase onPlayerJoin =
+            new RegisterIntoDatabase();
     /**
      *
      */
@@ -86,10 +106,13 @@ public class Races extends JavaPlugin {
         }
 
 
-        // To structure it a bit
+        // Registering Custom Events
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(underWaterBreathingEvent, this);
         pm.registerEvents(onEatFood, this);
+        pm.registerEvents(onPlayerJoin, this);
+        pm.registerEvents(underWaterFoodRegeneration, this);
+        pm.registerEvents(onSprintEvent, this);
     }
 
     /**
@@ -131,6 +154,8 @@ public class Races extends JavaPlugin {
                 player.sendMessage(getConfig().getString("info"));
                 return true;
             } else if (args.length >= 1 && args[0].equalsIgnoreCase("self")) {
+                final int food = 5;
+                player.setFoodLevel(food);
                 try {
                     ResultSet rs = sqlite.query("SELECT race FROM Races"
                 + " WHERE playername = '" + player.getName() + "'");
@@ -168,20 +193,6 @@ public class Races extends JavaPlugin {
             } else if (args.length >= 1) {
                 player.sendMessage(getConfig().getString("help"));
             } else if (args.length == 0) {
-                try {
-                    ResultSet rs = sqlite.query("SELECT COUNT(*) FROM Races"
-                    + " WHERE playername='" + player.getName() + "'");
-                    System.out.println(rs.getRow());
-                    if (rs.getRow() == 0) {
-                        sqlite.query("INSERT INTO Races(playername"
-                    + ", race) VALUES('" + player.getName() + "', 'Default')");
-                        System.out.println("Die Schleife");
-                        }
-                    } catch (SQLException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                System.out.println("der Query ging durch!");
                 // Text that shows up when you type /race
                 player.sendMessage(getConfig().getString("help"));
                 return true;
